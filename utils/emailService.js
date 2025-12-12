@@ -14,10 +14,13 @@ const createTransporter = () => {
       user: 'otp@bxiworld.com',
       pass: 'ammpkmvamvlslkrg',
     },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
   });
 };
 
-// Send email
+// Send email with timeout
 const sendEmail = async (options) => {
   const transporter = createTransporter();
 
@@ -28,8 +31,14 @@ const sendEmail = async (options) => {
     html: options.html,
   };
 
+  // Add timeout to prevent hanging (20 seconds max)
+  const emailPromise = transporter.sendMail(mailOptions);
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Email sending timeout')), 20000);
+  });
+
   try {
-    await transporter.sendMail(mailOptions);
+    await Promise.race([emailPromise, timeoutPromise]);
     console.log(`Email sent to ${options.email}`);
   } catch (error) {
     console.error('Error sending email:', error);

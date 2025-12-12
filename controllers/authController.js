@@ -181,24 +181,17 @@ exports.sendLoginOTP = async (req, res) => {
     user.otpExpires = otpExpires;
     await user.save({ validateBeforeSave: false });
 
-    // Send OTP email
-    try {
-      await sendOTPEmail(user, otp);
-    } catch (error) {
-      // Clear OTP if email fails
-      user.otp = undefined;
-      user.otpExpires = undefined;
-      await user.save({ validateBeforeSave: false });
-
-      return res.status(500).json({
-        success: false,
-        message: 'Error sending OTP email',
-      });
-    }
-
+    // Send response immediately to avoid timeout
     res.status(200).json({
       success: true,
       message: 'OTP has been sent to your email',
+    });
+
+    // Send OTP email asynchronously (fire and forget)
+    // This prevents timeout issues on hosting platforms like Render
+    sendOTPEmail(user, otp).catch((error) => {
+      console.error('Error sending OTP email (async):', error);
+      // Log error but don't clear OTP - user can request a new one if needed
     });
   } catch (error) {
     res.status(500).json({
