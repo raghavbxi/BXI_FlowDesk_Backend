@@ -153,10 +153,14 @@ exports.sendLoginOTP = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[OTP Request] Looking for user with email: ${normalizedEmail}`);
+
     // Check for user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
+      console.log(`[OTP Request] User not found: ${normalizedEmail}`);
       // Don't reveal if user exists for security
       return res.status(200).json({
         success: true,
@@ -164,8 +168,11 @@ exports.sendLoginOTP = async (req, res) => {
       });
     }
 
+    console.log(`[OTP Request] User found: ${user.name} (${user.email})`);
+
     // Check if user is active
     if (!user.isActive) {
+      console.log(`[OTP Request] User account is deactivated: ${user.email}`);
       return res.status(401).json({
         success: false,
         message: 'User account is deactivated',
@@ -176,10 +183,14 @@ exports.sendLoginOTP = async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
+    console.log(`[OTP Request] Generated OTP for ${user.email}: ${otp}`);
+
     // Save OTP to user
     user.otp = otp;
     user.otpExpires = otpExpires;
     await user.save({ validateBeforeSave: false });
+
+    console.log(`[OTP Request] OTP saved to database for ${user.email}`);
 
     // Send response immediately to avoid timeout
     res.status(200).json({
@@ -189,11 +200,19 @@ exports.sendLoginOTP = async (req, res) => {
 
     // Send OTP email asynchronously (fire and forget)
     // This prevents timeout issues on hosting platforms like Render
-    sendOTPEmail(user, otp).catch((error) => {
-      console.error('Error sending OTP email (async):', error);
-      // Log error but don't clear OTP - user can request a new one if needed
-    });
+    console.log(`[OTP Request] Attempting to send email to ${user.email}...`);
+    sendOTPEmail(user, otp)
+      .then(() => {
+        console.log(`✓ [OTP Email] Successfully sent to ${user.email}`);
+      })
+      .catch((error) => {
+        console.error(`✗ [OTP Email] Failed to send to ${user.email}:`, error.message);
+        console.error(`[OTP Email] Error code: ${error.code}`);
+        console.error(`[OTP Email] Error response:`, error.response);
+        // Log error but don't clear OTP - user can request a new one if needed
+      });
   } catch (error) {
+    console.error(`[OTP Request] Unexpected error:`, error);
     res.status(500).json({
       success: false,
       message: 'Error sending OTP',

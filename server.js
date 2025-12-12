@@ -37,6 +37,12 @@ app.use('/api/steps', require('./routes/steps'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/updates', require('./routes/updates'));
 
+// Test route (for debugging email issues - remove in production)
+if (process.env.NODE_ENV !== 'production') {
+  const { testEmail } = require('./controllers/testController');
+  app.post('/api/test/send-email', testEmail);
+}
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
