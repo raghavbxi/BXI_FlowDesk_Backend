@@ -4,12 +4,12 @@ const User = require('../models/User');
 // Create transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
+    host: 'smtp.gmail.com',
+    port: 587,
     secure: false,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: 'otp@bxiworld.com',
+      pass: 'ammpkmvamvlslkrg',
     },
   });
 };
@@ -19,7 +19,7 @@ const sendEmail = async (options) => {
   const transporter = createTransporter();
 
   const mailOptions = {
-    from: `"Task Management System" <${process.env.SMTP_USER}>`,
+    from: `"Task Management System" <otp@bxiworld.com>`,
     to: options.email,
     subject: options.subject,
     html: options.html,
@@ -205,6 +205,33 @@ exports.sendOverdueAlert = async (user, tasks) => {
     });
   } catch (error) {
     console.error('Error sending overdue alert:', error);
+  }
+};
+
+// Send OTP email for login
+exports.sendOTPEmail = async (user, otp) => {
+  try {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #0071e3;">Login OTP</h2>
+        <p>Hello ${user.name},</p>
+        <p>You requested to login to your account. Use the following OTP to complete your login:</p>
+        <div style="background: #f5f5f7; padding: 30px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h1 style="color: #0071e3; font-size: 36px; letter-spacing: 8px; margin: 0;">${otp}</h1>
+        </div>
+        <p style="color: #86868b; font-size: 14px;">This OTP will expire in 10 minutes.</p>
+        <p style="color: #86868b; font-size: 14px;">If you didn't request this OTP, please ignore this email.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Your Login OTP - Task Management System',
+      html,
+    });
+  } catch (error) {
+    console.error('Error sending OTP email:', error);
+    throw error;
   }
 };
 
