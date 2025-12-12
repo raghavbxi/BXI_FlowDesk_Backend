@@ -52,11 +52,12 @@ exports.getTaskSteps = async (req, res) => {
 };
 
 // @desc    Create a new step
-// @route   POST /api/steps
+// @route   POST /api/steps/tasks/:taskId
 // @access  Private
 exports.createStep = async (req, res) => {
   try {
-    const { taskId, title, description, assignedUsers, startDate, endDate } = req.body;
+    const taskId = req.params.taskId;
+    const { title, description, assignedUsers, startDate, endDate } = req.body;
 
     const task = await Task.findById(taskId);
 
@@ -220,7 +221,7 @@ exports.updateStep = async (req, res) => {
 };
 
 // @desc    Activate a step (make it active and deactivate others)
-// @route   POST /api/steps/:id/activate
+// @route   PUT /api/steps/:id/activate
 // @access  Private
 exports.activateStep = async (req, res) => {
   try {
@@ -287,7 +288,7 @@ exports.activateStep = async (req, res) => {
 };
 
 // @desc    Complete a step
-// @route   POST /api/steps/:id/complete
+// @route   PUT /api/steps/:id/complete
 // @access  Private
 exports.completeStep = async (req, res) => {
   try {

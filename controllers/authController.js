@@ -15,23 +15,31 @@ const generateToken = (id) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email } = req.body;
+
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name and email',
+      });
+    }
 
     // Check if user exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: email.toLowerCase() });
 
     if (userExists) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists',
+        message: 'User already exists with this email',
       });
     }
 
-    // Create user
+    // Create user without password (OTP login only)
     const user = await User.create({
-      name,
-      email,
-      password,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      // No password - will use OTP login
     });
 
     const token = generateToken(user._id);

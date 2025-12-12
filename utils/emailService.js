@@ -1,6 +1,9 @@
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 
+// Website URL constant
+const WEBSITE_URL = 'https://bxiflowdesk.netlify.app/login';
+
 // Create transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -53,7 +56,12 @@ exports.sendTaskAssignmentEmail = async (userIds, task) => {
             <p><strong>End Date:</strong> ${new Date(task.endDate).toLocaleDateString()}</p>
             <p><strong>Assigned by:</strong> ${creator.name}</p>
           </div>
-          <p>Please log in to view and start working on this task.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${WEBSITE_URL}" style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to View Task</a>
+          </div>
+          <p style="text-align: center; color: #86868b; font-size: 14px;">
+            Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+          </p>
         </div>
       `;
 
@@ -82,7 +90,12 @@ exports.sendMentionEmail = async (mentionedUserIds, task, commenter, commentText
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 0;">"${commentText}"</p>
           </div>
-          <p>Please log in to view the full conversation.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${WEBSITE_URL}" style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to View Conversation</a>
+          </div>
+          <p style="text-align: center; color: #86868b; font-size: 14px;">
+            Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+          </p>
         </div>
       `;
 
@@ -118,7 +131,12 @@ exports.sendHelpRequestEmail = async (task, requester) => {
             <p><strong>Description:</strong> ${task.description || 'No description'}</p>
             <p><strong>Current Progress:</strong> ${task.manualProgress}%</p>
           </div>
-          <p>Please log in to provide assistance.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${WEBSITE_URL}" style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to Provide Assistance</a>
+          </div>
+          <p style="text-align: center; color: #86868b; font-size: 14px;">
+            Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+          </p>
         </div>
       `;
 
@@ -156,7 +174,12 @@ exports.sendDailyReminder = async (user, tasks) => {
         <p>Hello ${user.name},</p>
         <p>You have <strong>${tasks.length}</strong> task(s) due soon:</p>
         ${tasksHtml}
-        <p>Please log in to view and update your tasks.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${WEBSITE_URL}" style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to View Tasks</a>
+        </div>
+        <p style="text-align: center; color: #86868b; font-size: 14px;">
+          Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+        </p>
       </div>
     `;
 
@@ -195,6 +218,12 @@ exports.sendOverdueAlert = async (user, tasks) => {
         <p>You have <strong>${tasks.length}</strong> overdue task(s):</p>
         ${tasksHtml}
         <p style="color: #c62828; font-weight: bold;">Please take immediate action on these tasks.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${WEBSITE_URL}" style="background-color: #ff3b30; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to View Tasks</a>
+        </div>
+        <p style="text-align: center; color: #86868b; font-size: 14px;">
+          Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+        </p>
       </div>
     `;
 
@@ -220,7 +249,13 @@ exports.sendOTPEmail = async (user, otp) => {
           <h1 style="color: #0071e3; font-size: 36px; letter-spacing: 8px; margin: 0;">${otp}</h1>
         </div>
         <p style="color: #86868b; font-size: 14px;">This OTP will expire in 10 minutes.</p>
-        <p style="color: #86868b; font-size: 14px;">If you didn't request this OTP, please ignore this email.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${WEBSITE_URL}" style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: 500;">Log In to Your Account</a>
+        </div>
+        <p style="text-align: center; color: #86868b; font-size: 14px;">
+          Or copy and paste this link: <a href="${WEBSITE_URL}" style="color: #0071e3;">${WEBSITE_URL}</a>
+        </p>
+        <p style="color: #86868b; font-size: 14px; margin-top: 20px;">If you didn't request this OTP, please ignore this email.</p>
       </div>
     `;
 

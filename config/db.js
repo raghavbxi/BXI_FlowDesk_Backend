@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(`mongodb+srv://Anmol:Bxiw2025@bxiworld-development.ehlehea.mongodb.net/BXI_Development_DB?retryWrites=true&w=majority`, {
+    const conn = await mongoose.connect(`mongodb+srv://Raghav:Bxiw2025@bxiworldcluster.skwher.mongodb.net/flowdesk?retryWrites=true&w=majority&appName=Bxiworldcluster`, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

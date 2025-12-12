@@ -14,10 +14,10 @@ const { protect } = require('../middleware/auth');
 router.use(protect);
 
 router.get('/tasks/:taskId', getTaskSteps);
-router.post('/', createStep);
+router.post('/tasks/:taskId', createStep);
 router.put('/:id', updateStep);
-router.post('/:id/activate', activateStep);
-router.post('/:id/complete', completeStep);
+router.put('/:id/activate', activateStep);
+router.put('/:id/complete', completeStep);
 router.delete('/:id', deleteStep);
 
 module.exports = router;
