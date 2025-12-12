@@ -12,7 +12,18 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'https://bxiflowdesk.netlify.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:5174',
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -24,6 +35,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/activities', require('./routes/activities'));
 app.use('/api/steps', require('./routes/steps'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/updates', require('./routes/updates'));
 
 // Health check
 app.get('/api/health', (req, res) => {
