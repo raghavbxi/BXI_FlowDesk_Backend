@@ -1,66 +1,18 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const User = require('../models/User');
 
-// Website URL constant
-const WEBSITE_URL = 'https://bxiflowdesk.netlify.app/login';
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Create a reusable transporter instance
-let transporterInstance = null;
+// Configuration from environment variables
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const WEBSITE_URL = process.env.WEBSITE_URL || 'https://bxiflowdesk.netlify.app/login';
+
+// Rate limiting
 let lastEmailTime = 0;
-const MIN_EMAIL_INTERVAL = 1000; // Minimum 1 second between emails to avoid rate limiting
+const MIN_EMAIL_INTERVAL = 100; // 100ms between emails (Resend handles rate limiting well)
 
-// Reset transporter (useful for connection issues)
-const resetTransporter = () => {
-  if (transporterInstance) {
-    console.log('[SMTP] Closing and resetting transporter...');
-    transporterInstance.close();
-    transporterInstance = null;
-  }
-};
-
-// Create transporter (singleton pattern)
-const getTransporter = () => {
-  if (!transporterInstance) {
-    console.log('[SMTP] Creating new transporter with Gmail SMTP...');
-    transporterInstance = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: 'otp@bxiworld.com',
-        pass: 'ammpkmvamvlslkrg',
-      },
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 30000, // 30 seconds
-      socketTimeout: 30000, // 30 seconds
-      pool: true, // Use connection pooling
-      maxConnections: 1,
-      maxMessages: 5, // Increased to handle more messages per connection
-      rateDelta: 1000, // Rate limit: 1 second between messages
-      rateLimit: 5, // Max 5 messages per rateDelta
-      tls: {
-        rejectUnauthorized: false, // Accept self-signed certificates
-      },
-      debug: false,
-      logger: false,
-    });
-
-    // Verify connection once on startup
-    transporterInstance.verify(function (error, success) {
-      if (error) {
-        console.error('✗ [SMTP] Connection verification failed:', error.message);
-        console.error('[SMTP] Error code:', error.code);
-        console.error('[SMTP] Error command:', error.command);
-        console.error('[SMTP] Full error:', error);
-      } else {
-        console.log('✓ [SMTP] Server is ready to take our messages');
-      }
-    });
-  }
-  return transporterInstance;
-};
-
-// Send email with retry logic
+// Send email with Resend (with retry logic)
 const sendEmail = async (options, retries = 3) => {
   let lastError;
   
@@ -68,79 +20,58 @@ const sendEmail = async (options, retries = 3) => {
   const timeSinceLastEmail = Date.now() - lastEmailTime;
   if (timeSinceLastEmail < MIN_EMAIL_INTERVAL) {
     const waitTime = MIN_EMAIL_INTERVAL - timeSinceLastEmail;
-    console.log(`[Email Service] Rate limiting: waiting ${waitTime}ms before sending...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Reset transporter if it's a retry (might be a connection issue)
       if (attempt > 1) {
         console.log(`[Email Service] Retry attempt ${attempt} for ${options.email}...`);
-        resetTransporter(); // Force new connection
-        // Wait before retry (exponential backoff)
+        // Exponential backoff
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
       
-      const transporter = getTransporter();
-      
-      const mailOptions = {
-        from: `"Task Management System" <otp@bxiworld.com>`,
+      if (attempt === 1) {
+        console.log(`[Email Service] Sending email to ${options.email}...`);
+        console.log(`[Email Service] From: ${EMAIL_FROM}`);
+        console.log(`[Email Service] Subject: ${options.subject}`);
+      }
+
+      // Send email using Resend
+      const result = await resend.emails.send({
+        from: EMAIL_FROM,
         to: options.email,
         subject: options.subject,
         html: options.html,
-      };
-
-      if (attempt === 1) {
-        console.log(`[Email Service] Sending email to ${options.email}...`);
-        console.log(`[Email Service] From: ${mailOptions.from}`);
-        console.log(`[Email Service] Subject: ${mailOptions.subject}`);
-      }
-
-      // Add timeout to prevent hanging (30 seconds max)
-      const emailPromise = transporter.sendMail(mailOptions);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000);
       });
 
-      const result = await Promise.race([emailPromise, timeoutPromise]);
       lastEmailTime = Date.now(); // Update last email time
       console.log(`✓ [Email Service] Email sent successfully to ${options.email} (attempt ${attempt})`);
-      console.log(`[Email Service] Message ID: ${result.messageId}`);
-      if (result.response) {
-        console.log(`[Email Service] Response: ${result.response}`);
-      }
+      console.log(`[Email Service] Message ID: ${result.data?.id || result.id}`);
+      
       return result;
     } catch (error) {
       lastError = error;
       console.error(`✗ [Email Service] Error sending email to ${options.email} (attempt ${attempt}/${retries}):`, error.message);
       console.error(`[Email Service] Error name: ${error.name}`);
-      console.error(`[Email Service] Error code: ${error.code}`);
-      if (error.command) {
-        console.error(`[Email Service] Error command: ${error.command}`);
+      
+      // Log additional error details if available
+      if (error.statusCode) {
+        console.error(`[Email Service] Status code: ${error.statusCode}`);
       }
-      if (error.responseCode) {
-        console.error(`[Email Service] Error responseCode: ${error.responseCode}`);
-      }
-      if (error.response) {
-        console.error(`[Email Service] Error response: ${error.response}`);
+      if (error.message) {
+        console.error(`[Email Service] Error message: ${error.message}`);
       }
       
-      // If it's a rate limit error, wait longer before retry
-      if (error.responseCode === 421 || error.responseCode === 450 || error.responseCode === 451) {
-        console.log('[Email Service] Rate limit detected, waiting longer...');
-        await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
+      // Don't retry on authentication errors
+      if (error.statusCode === 401 || error.statusCode === 403) {
+        console.error('[Email Service] Authentication error - check RESEND_API_KEY');
+        throw error;
       }
       
-      // If connection error, reset transporter
-      if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT' || error.code === 'EAUTH') {
-        console.log('[Email Service] Connection error detected, will reset transporter on retry...');
-        resetTransporter();
-      }
-      
-      // Don't retry on certain errors
-      if (error.code === 'EAUTH' && attempt === 1) {
-        console.error('[Email Service] Authentication error - not retrying');
+      // Don't retry on validation errors (400)
+      if (error.statusCode === 400) {
+        console.error('[Email Service] Validation error - check email format');
         throw error;
       }
     }
@@ -384,12 +315,9 @@ exports.sendOTPEmail = async (user, otp) => {
     console.error(`[Email Service] Error sending OTP email to ${user.email}:`, error);
     console.error(`[Email Service] Error details:`, {
       message: error.message,
-      code: error.code,
-      command: error.command,
-      responseCode: error.responseCode,
-      response: error.response,
+      statusCode: error.statusCode,
+      name: error.name,
     });
     throw error;
   }
 };
-

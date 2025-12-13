@@ -29,6 +29,8 @@ exports.testEmail = async (req, res) => {
     const testOTP = '123456';
     
     console.log(`[Test Email] Attempting to send test email to ${user.email}...`);
+    console.log(`[Test Email] Using Resend API with key: ${process.env.RESEND_API_KEY ? 'Key is set' : 'KEY NOT SET!'}`);
+    console.log(`[Test Email] Email from: ${process.env.EMAIL_FROM || 'onboarding@resend.dev'}`);
     
     await sendOTPEmail(user, testOTP);
     
@@ -43,12 +45,11 @@ exports.testEmail = async (req, res) => {
       message: 'Error sending test email',
       error: error.message,
       details: {
-        code: error.code,
-        command: error.command,
-        responseCode: error.responseCode,
-        response: error.response,
+        statusCode: error.statusCode,
+        name: error.name,
       },
     });
   }
 };
+
 
