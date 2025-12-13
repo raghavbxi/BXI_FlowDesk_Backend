@@ -16,7 +16,7 @@ Go to: https://dashboard.render.com → Your Service → Environment
 Add these variables:
 
 ```bash
-RESEND_API_KEY=re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w
+RESEND_API_KEY=re_your_resend_api_key_here
 EMAIL_FROM=onboarding@resend.dev
 WEBSITE_URL=https://bxiflowdesk.netlify.app/login
 NODE_ENV=production
@@ -55,7 +55,7 @@ Render will auto-deploy.
 Create `.env` file:
 
 ```bash
-RESEND_API_KEY=re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w
+RESEND_API_KEY=re_your_resend_api_key_here
 EMAIL_FROM=onboarding@resend.dev
 WEBSITE_URL=http://localhost:5173
 MONGODB_URI=your_mongodb_connection_string

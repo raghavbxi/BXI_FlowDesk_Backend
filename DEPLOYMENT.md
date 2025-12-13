@@ -18,7 +18,7 @@ You need to set these environment variables on your hosting platform:
 
 ### Required Variables:
 ```bash
-RESEND_API_KEY=re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w
+RESEND_API_KEY=re_your_resend_api_key_here
 EMAIL_FROM=onboarding@resend.dev
 WEBSITE_URL=https://bxiflowdesk.netlify.app/login
 ```
@@ -46,7 +46,7 @@ NODE_ENV=production
 
 | Key | Value |
 |-----|-------|
-| `RESEND_API_KEY` | `re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w` |
+| `RESEND_API_KEY` | `re_your_resend_api_key_here` |
 | `EMAIL_FROM` | `onboarding@resend.dev` |
 | `WEBSITE_URL` | `https://bxiflowdesk.netlify.app/login` |
 | `NODE_ENV` | `production` |
@@ -99,7 +99,7 @@ PORT=5000
 NODE_ENV=development
 
 # Email (Resend)
-RESEND_API_KEY=re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w
+RESEND_API_KEY=re_your_resend_api_key_here
 EMAIL_FROM=onboarding@resend.dev
 WEBSITE_URL=http://localhost:5173
 ```

@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(`mongodb+srv://Raghav:Bxiw2025@bxiworldcluster.skwher.mongodb.net/flowdesk?retryWrites=true&w=majority&appName=Bxiworldcluster`, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI is not set');
+    }
+
+    const conn = await mongoose.connect(mongoUri);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
