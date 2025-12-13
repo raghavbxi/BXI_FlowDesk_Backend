@@ -14,7 +14,7 @@ const app = express();
 // Middleware
 const corsOptions = {
   origin: [
-    'https://bxiflowdesk.netlify.app',
+    'https://bxiflowdesk.web.app',
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:5174',
