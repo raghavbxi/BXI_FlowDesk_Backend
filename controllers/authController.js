@@ -10,6 +10,53 @@ const generateToken = (id) => {
   });
 };
 
+const verifyGoogleIdToken = async (idToken) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    const err = new Error('GOOGLE_CLIENT_ID is not set');
+    err.statusCode = 500;
+    throw err;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+    const resp = await fetch(url, { signal: controller.signal });
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      const err = new Error(data?.error_description || 'Invalid Google ID token');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    // Validate audience matches our Google OAuth client ID
+    if (data.aud !== clientId) {
+      const err = new Error('Google token audience mismatch');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    // Ensure email exists and is verified
+    if (!data.email || data.email_verified !== 'true') {
+      const err = new Error('Google account email is not verified');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    return {
+      email: String(data.email).toLowerCase().trim(),
+      name: data.name ? String(data.name).trim() : undefined,
+      avatar: data.picture ? String(data.picture).trim() : undefined,
+      sub: data.sub ? String(data.sub) : undefined,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
@@ -59,6 +106,76 @@ exports.register = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error registering user',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Login/Signup user with Google OAuth (ID token)
+// @route   POST /api/auth/oauth/google
+// @access  Public
+exports.googleOAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide idToken',
+      });
+    }
+
+    const profile = await verifyGoogleIdToken(idToken);
+
+    let user = await User.findOne({ email: profile.email });
+
+    if (!user) {
+      user = await User.create({
+        name: profile.name || profile.email.split('@')[0],
+        email: profile.email,
+        avatar: profile.avatar || '',
+      });
+    } else {
+      // Keep user info fresh (but don’t overwrite intentionally-set fields)
+      let shouldSave = false;
+      if (!user.avatar && profile.avatar) {
+        user.avatar = profile.avatar;
+        shouldSave = true;
+      }
+      if (profile.name && user.name !== profile.name) {
+        user.name = profile.name;
+        shouldSave = true;
+      }
+      if (shouldSave) {
+        await user.save();
+      }
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'User account is deactivated',
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    const status = error.statusCode || 500;
+    res.status(status).json({
+      success: false,
+      message: 'Error logging in with Google',
       error: error.message,
     });
   }

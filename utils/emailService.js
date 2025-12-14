@@ -45,6 +45,7 @@ const sendEmail = async (options, retries = 3) => {
         html: options.html,
       });
 
+      console.log(`[Email Service] Result: ${JSON.stringify(result)}`);
       lastEmailTime = Date.now(); // Update last email time
       console.log(`✓ [Email Service] Email sent successfully to ${options.email} (attempt ${attempt})`);
       console.log(`[Email Service] Message ID: ${result.data?.id || result.id}`);
