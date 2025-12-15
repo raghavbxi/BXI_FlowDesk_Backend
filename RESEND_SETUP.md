@@ -102,3 +102,4 @@ All these email types now work with Resend:
 
 **That's it! Your emails should now work on the hosted URL.** 🎉
 
+

@@ -1,0 +1,20 @@
+LOCAL DEVELOPMENT ENVIRONMENT VARIABLES
+
+Create a file named ".env" in BXI_FlowDesk_Backend/ with these contents:
+
+# Authentication
+JWT_SECRET=7f9d8a6b5c4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a
+GOOGLE_CLIENT_ID=892328854200-s7s1pir1t1p3va3u75cgtdad9flh0ght.apps.googleusercontent.com
+
+# Email Service
+RESEND_API_KEY=re_PG1TKbBw_8yWfXsPBk3UrG8qi4MBusu2w
+EMAIL_FROM=onboarding@resend.dev
+WEBSITE_URL=http://localhost:3000
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/task-management
+
+# Server
+NODE_ENV=development
+PORT=5000
+
